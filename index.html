@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sentence Builder Game</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f8ff;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .progress-container {
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .progress-bar {
+      height: 20px;
+      border-radius: 10px;
+      background-color: #4CAF50;
+      width: 0%;
+      transition: width 0.3s;
+      text-align: center;
+      color: white;
+      line-height: 20px;
+      font-size: 12px;
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .category {
+      background-color: #e6f7ff;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .word-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+
+    .word {
+      padding: 8px 15px;
+      background-color: #3498db;
+      color: white;
+      border-radius: 6px;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .drop-zones {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .drop-zone {
+      min-height: 60px;
+      background-color: #ecf0f1;
+      border: 2px dashed #bdc3c7;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #audio-btn {
+      background-color: #9b59b6;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #feedback {
+      text-align: center;
+      font-size: 18px;
+      min-height: 27px;
+      margin: 15px 0;
+    }
+
+    .correct {
+      color: #27ae60;
+    }
+
+    .incorrect {
+      color: #e74c3c;
+    }
+
+    #sentence-display {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 20px;
+      margin-top: 20px;
+      min-height: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Sentence Builder</h1>
+  <div class="progress-container">
+    <div class="progress-bar" id="progress-bar">0/10</div>
+  </div>
+
+  <div class="categories">
+    <div class="category">
+      <h3>Who?</h3>
+      <div class="drop-zone" id="who-drop"></div>
+    </div>
+    <div class="category">
+      <h3>Action?</h3>
+      <div class="drop-zone" id="action-drop"></div>
+    </div>
+    <div class="category">
+      <h3>What?</h3>
+      <div class="drop-zone" id="what-drop"></div>
+    </div>
+    <div class="category">
+      <h3>Where?</h3>
+      <div class="drop-zone" id="where-drop"></div>
+    </div>
+  </div>
+
+  <div class="word-bank" id="word-bank">
+    <!-- Words will be added here by JavaScript -->
+  </div>
+
+  <div class="buttons">
+    <button onclick="checkAnswer()">Check</button>
+    <button onclick="shuffleWords()">Shuffle</button>
+    <button onclick="resetSentence()">Reset</button>
+    <button onclick="nextSentence()">Next</button>
+    <button id="audio-btn" onclick="playSentenceAudio()">🔊 Play Sentence</button>
+  </div>
+
+  <div id="feedback"></div>
+
+  <div id="sentence-display">
+    <strong>Your Sentence:</strong>
+    <div id="built-sentence"></div>
+  </div>
+
+  <!-- Audio elements -->
+  <audio id="audio1" src="girl.mp3"></audio>
+  <audio id="audio2" src="boy.mp3"></audio>
+  <audio id="audio3" src="grandpa.mp3"></audio>
+  <audio id="audio4" src="teacher.mp3"></audio>
+  <audio id="audio5" src="dog.mp3"></audio>
+  <audio id="audio6" src="mother.mp3"></audio>
+  <audio id="audio7" src="baby.mp3"></audio>
+  <audio id="audio8" src="cat.mp3"></audio>
+  <audio id="audio9" src="father.mp3"></audio>
+  <audio id="audio10" src="bird.mp3"></audio>
+
+  <script>
+    const sentences = [
+      { 
+        who: "The girl", 
+        action: "washes", 
+        what: "clothes", 
+        where: "",
+        audioId: "audio1"
+      },
+      { 
+        who: "A boy", 
+        action: "kicks", 
+        what: "a ball", 
+        where: "in the park",
+        audioId: "audio2"
+      },
+      { 
+        who: "Grandpa", 
+        action: "tells", 
+        what: "stories", 
+        where: "at night",
+        audioId: "audio3"
+      },
+      { 
+        who: "The teacher", 
+        action: "reads", 
+        what: "a book", 
+        where: "to the class",
+        audioId: "audio4"
+      },
+      { 
+        who: "The dog", 
+        action: "chases", 
+        what: "the cat", 
+        where: "in the yard",
+        audioId: "audio5"
+      },
+      { 
+        who: "Mother", 
+        action: "cooks", 
+        what: "dinner", 
+        where: "in the kitchen",
+        audioId: "audio6"
+      },
+      { 
+        who: "The baby", 
+        action: "drinks", 
+        what: "milk", 
+        where: "from a bottle",
+        audioId: "audio7"
+      },
+      { 
+        who: "A cat", 
+        action: "sleeps", 
+        what: "on the sofa", 
+        where: "near the window",
+        audioId: "audio8"
+      },
+      { 
+        who: "Father", 
+        action: "drives", 
+        what: "the car", 
+        where: "to work",
+        audioId: "audio9"
+      },
+      { 
+        who: "A bird", 
+        action: "sings", 
+        what: "a song", 
+        where: "in the tree",
+        audioId: "audio10"
+      }
+    ];
+
+    let currentSentence = 0;
+    let draggedWord = null;
+    let correctAnswers = 0;
+    let originalWordBank = [];
+
+    function updateProgressBar() {
+      const progress = (correctAnswers / sentences.length) * 100;
+      document.getElementById('progress-bar').style.width = progress + '%';
+      document.getElementById('progress-bar').textContent = `${correctAnswers}/${sentences.length}`;
+    }
+
+    function loadSentence() {
+      const sentence = sentences[currentSentence];
+      const words = [
+        sentence.who,
+        sentence.action,
+        sentence.what,
+        sentence.where
+      ].filter(word => word !== ""); // Remove empty words
+
+      const wordBank = document.getElementById('word-bank');
+      wordBank.innerHTML = '';
+      
+      // Store original word order for reset on wrong answer
+      originalWordBank = [...words];
+      
+      // Shuffle words
+      words.sort(() => Math.random() - 0.5);
+      
+      words.forEach(word => {
+        const wordElement = document.createElement('div');
+        wordElement.className = 'word';
+        wordElement.textContent = word;
+        wordElement.draggable = true;
+        
+        wordElement.addEventListener('dragstart', (e) => {
+          draggedWord = wordElement;
+          e.dataTransfer.setData('text/plain', word);
+        });
+        
+        wordBank.appendChild(wordElement);
+      });
+
+      // Clear drop zones
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.innerHTML = '';
+      });
+
+      // Clear feedback and sentence display
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('built-sentence').textContent = '';
+    }
+
+    function setupDropZones() {
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+        
+        zone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (draggedWord) {
+            // Remove from word bank
+            draggedWord.remove();
+            
+            // Clear the drop zone first (only one word per zone)
+            zone.innerHTML = '';
+            
+            // Add to drop zone
+            const wordClone = draggedWord.cloneNode(true);
+            wordClone.addEventListener('dragstart', (e) => {
+              draggedWord = wordClone;
+              e.dataTransfer.setData('text/plain', wordClone.textContent);
+            });
+            zone.appendChild(wordClone);
+            
+            updateSentenceDisplay();
+          }
+        });
+      });
+    }
+
+    function updateSentenceDisplay() {
+      const who = document.getElementById('who-drop').textContent;
+      const action = document.getElementById('action-drop').textContent;
+      const what = document.getElementById('what-drop').textContent;
+      const where = document.getElementById('where-drop').textContent;
+      
+      let sentence = '';
+      if (who) sentence += who + ' ';
+      if (action) sentence += action + ' ';
+      if (what) sentence += what + ' ';
+      if (where) sentence += where;
+      
+      document.getElementById('built-sentence').textContent = sentence.trim();
+    }
+
+    function playSentenceAudio() {
+      const audioElement = document.getElementById(sentences[currentSentence].audioId);
+      if (audioElement) {
+        audioElement.currentTime = 0; // Rewind to start
+        audioElement.play().catch(e => console.log("Audio play failed:", e));
+      }
+    }
+
+    function resetToOriginalWords() {
+      const wordBank = document.getElementById('word-bank');
+      wordBank.innerHTML = '';
+      
+      originalWordBank.forEach(word => {
+        const wordElement = document.createElement('div');
+        wordElement.className = 'word';
+        wordElement.textContent = word;
+        wordElement.draggable = true;
+        
+        wordElement.addEventListener('dragstart', (e) => {
+          draggedWord = wordElement;
+          e.dataTransfer.setData('text/plain', word);
+        });
+        
+        wordBank.appendChild(wordElement);
+      });
+
+      // Clear drop zones
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.innerHTML = '';
+      });
+
+      updateSentenceDisplay();
+    }
+
+    function checkAnswer() {
+      const who = document.getElementById('who-drop').textContent;
+      const action = document.getElementById('action-drop').textContent;
+      const what = document.getElementById('what-drop').textContent;
+      const where = document.getElementById('where-drop').textContent;
+      
+      const current = sentences[currentSentence];
+      const feedback = document.getElementById('feedback');
+      
+      if (who === current.who && 
+          action === current.action && 
+          what === current.what && 
+          where === current.where) {
+        feedback.textContent = "Correct! Well done!";
+        feedback.className = "correct";
+        correctAnswers++;
+        updateProgressBar();
+        // Play audio automatically when correct
+        playSentenceAudio();
+      } else {
+        feedback.textContent = "Not quite right. Try again!";
+        feedback.className = "incorrect";
+        // Reset words to original positions
+        resetToOriginalWords();
+      }
+    }
+
+    function shuffleWords() {
+      loadSentence();
+    }
+
+    function resetSentence() {
+      // Move all words back to word bank
+      const wordBank = document.getElementById('word-bank');
+      document.querySelectorAll('.drop-zone .word').forEach(word => {
+        wordBank.appendChild(word);
+      });
+      
+      // Clear drop zones
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.innerHTML = '';
+      });
+      
+      // Clear feedback and sentence display
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('built-sentence').textContent = '';
+    }
+
+    function nextSentence() {
+      currentSentence = (currentSentence + 1) % sentences.length;
+      loadSentence();
+    }
+
+    // Initialize the game
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSentence();
+      setupDropZones();
+      updateProgressBar();
+    });
+  </script>
+</body>
+</html>
